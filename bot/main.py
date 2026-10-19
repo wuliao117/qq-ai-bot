@@ -242,21 +242,39 @@ class Bot:
         if gid in bl or (wl and gid not in wl):
             return
 
-        # 触发判定
+        # 触发判定：@自己 / 关键词 / 前缀 / 回复机器人 / 全部消息
         trig = self.cfg["trigger"]
-        at_me = is_at_me(segs, self.self_id)
+        at_enabled = bool(trig.get("require_at", True))
+        all_msg = bool(trig.get("all_messages", not at_enabled))
+
+        if all_msg and not text:
+            return
+
+        at_me = is_at_me(segs, self.self_id) if at_enabled else False
         reply_me = reply_to_bot(segs, self.bot_msg_ids.get(gid, deque()))
+
         hit_prefix = None
         for p in trig.get("prefixes", []):
-            if text.startswith(p):
+            if p and text.startswith(p):
                 hit_prefix = p
                 break
 
-        if trig.get("require_at", True):
-            if not (at_me or (reply_me and trig.get("reply_to_bot", True)) or hit_prefix):
-                return
-        elif not (at_me or hit_prefix):
+        # 关键词：出现在消息任意位置就算命中，大小写不敏感
+        hit_kw = None
+        for k in trig.get("keywords", []):
+            k = str(k).strip()
+            if k and k.lower() in text.lower():
+                hit_kw = k
+                break
+
+        triggered = all_msg or at_me or bool(hit_prefix) or bool(hit_kw)
+        if not triggered and trig.get("reply_to_bot", True) and reply_me:
+            triggered = True
+        if not triggered:
             return
+
+        if hit_kw and not (at_me or hit_prefix):
+            log.info("[%s] 关键词触发: %s", gid, hit_kw)
 
         question = text
         if hit_prefix:

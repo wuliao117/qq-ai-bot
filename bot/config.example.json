@@ -7,6 +7,8 @@
   },
   "trigger": {
     "require_at": true,
+    "all_messages": false,
+    "keywords": [],
     "prefixes": ["/ai ", "小助手 "],
     "reply_to_bot": true,
     "allow_private": true

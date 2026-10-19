@@ -13,7 +13,7 @@ QQ 客户端(无头) ──注入──▶ NapCatQQ ──反向 WebSocket──
 
 ## 特性
 
-- **@ 即答**：只在被 @ 时说话，不刷屏；也可以配前缀触发、回复触发
+- **多种触发**：@ 即答 / 关键词命中就说话 / 前缀触发 / 回复机器人触发，按需组合
 - **群上下文感知**：把群里最近 N 条聊天当背景喂给模型，回答贴合当前话题
 - **每个群独立上下文**：`@机器人 /reset` 单独清空，互不干扰
 - **防刷屏**：每群每分钟回复上限、并发上限、超长回复自动分段
@@ -128,8 +128,10 @@ scripts\start_all.cmd
 | --- | --- |
 | `onebot.port` | 机器人监听的端口，要和 NapCat 里填的 url 对上 |
 | `onebot.access_token` | 非空时 NapCat 必须带同样 token 才能连入 |
-| `trigger.require_at` | `true` 只有 @ 才回答；`false` 则群消息都回（慎用） |
-| `trigger.prefixes` | 额外触发前缀，如 `["/ai "]` |
+| `trigger.require_at` | `true` = 启用 @ 触发；`false` = 不靠 @（见 `all_messages`） |
+| `trigger.keywords` | **关键词触发**：消息里出现任意一个就回复，如 `["天气","小助手"]`，大小写不敏感，可配多个 |
+| `trigger.all_messages` | `true` = 群里每条消息都回（慎用，会很吵） |
+| `trigger.prefixes` | 前缀触发，如 `["/ai "]` |
 | `trigger.allow_private` | 是否响应私聊 |
 | `llm.base_url` | OpenAI 兼容地址，末尾的 `/v1` 要带上 |
 | `llm.system_prompt` | 人格设定，随便改 |
