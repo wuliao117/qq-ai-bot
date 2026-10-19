@@ -62,8 +62,8 @@ def load_config() -> dict:
 
 
 # ---------------------------------------------------------------- 文本工具
-def seg_text(segments: list[dict]) -> str:
-    """把消息段数组拼成纯文本（at 用 @名字 占位）。"""
+def seg_text(segments: list[dict], self_id: str = "") -> str:
+    """把消息段数组拼成纯文本。@自己的那一节直接丢掉，避免把 @QQ号 灌进模型。"""
     out = []
     for s in segments or []:
         t = s.get("type")
@@ -72,7 +72,9 @@ def seg_text(segments: list[dict]) -> str:
             out.append(d.get("text", ""))
         elif t == "at":
             qq = str(d.get("qq", ""))
-            out.append("" if qq == "all" else f"@{d.get('name') or qq}")
+            if qq == self_id or qq == "all":
+                continue
+            out.append(f"@{d.get('name') or qq}")
         elif t == "image":
             out.append("[图片]")
         elif t == "face":
@@ -230,7 +232,7 @@ class Bot:
         if uid == self.self_id:
             return
 
-        text = seg_text(segs)
+        text = seg_text(segs, self.self_id)
         if text:
             self._remember(gid, f"{sender}: {text}", msg_id)
 
@@ -259,7 +261,8 @@ class Bot:
         question = text
         if hit_prefix:
             question = text[len(hit_prefix):].strip()
-        question = re.sub(r"^@\S+\s*", "", question).strip()
+        question = re.sub(r"^@\S+\s*", "", question)
+        question = question.replace(f"@{self.self_id}", "").strip()
         if not question:
             await self.send_text("group", int(gid), "在的，有什么可以帮你？", msg_id)
             return
@@ -290,7 +293,7 @@ class Bot:
         msg_id = str(data.get("message_id", ""))
         if uid == self.self_id:
             return
-        text = seg_text(data.get("message") or [])
+        text = seg_text(data.get("message") or [], self.self_id)
         if not text:
             return
         self._remember(f"p{uid}", f"对方: {text}", msg_id)
