@@ -138,6 +138,20 @@ def split_reply(text: str, limit: int) -> list[str]:
 
 
 # ---------------------------------------------------------------- 机器人
+def keyword_hit(keyword: str, text: str) -> bool:
+    """关键词是否命中。
+
+    纯 ASCII 字母/数字的关键词按「单词边界」匹配，避免 "ds" 命中 "friends"；
+    其它（中文、带符号的）按包含匹配，如 "看看" 命中 "我看看这个"。
+    """
+    k = str(keyword).strip()
+    if not k or not text:
+        return False
+    if k.isascii() and k.isalnum():
+        pat = r"(?<![A-Za-z0-9])" + re.escape(k) + r"(?![A-Za-z0-9])"
+        return re.search(pat, text, re.I) is not None
+    return k.lower() in text.lower()
+
 class Bot:
     def __init__(self, cfg: dict):
         self.cfg = cfg
@@ -259,12 +273,11 @@ class Bot:
                 hit_prefix = p
                 break
 
-        # 关键词：出现在消息任意位置就算命中，大小写不敏感
+        # 关键词：出现在消息任意位置就算命中（英文按单词边界，中文按包含）
         hit_kw = None
         for k in trig.get("keywords", []):
-            k = str(k).strip()
-            if k and k.lower() in text.lower():
-                hit_kw = k
+            if keyword_hit(k, text):
+                hit_kw = str(k).strip()
                 break
 
         triggered = all_msg or at_me or bool(hit_prefix) or bool(hit_kw)

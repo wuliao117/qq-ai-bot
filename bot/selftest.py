@@ -74,7 +74,7 @@ async def main() -> int:
     cfg["onebot"]["port"] = BOT_PORT
     cfg["llm"]["base_url"] = f"http://127.0.0.1:{LLM_PORT}/v1"
     cfg["llm"]["api_key"] = "selftest"
-    cfg["trigger"]["keywords"] = ["天气"]          # 自检用关键词
+    cfg["trigger"]["keywords"] = ["天气", "ds"]   # 自检用关键词（含英文短词，验边界）
     cfg["trigger"]["all_messages"] = False
     cfg["behavior"]["max_replies_per_minute"] = 99
     tcfg = BASE / "config.selftest.json"
@@ -124,6 +124,26 @@ async def main() -> int:
                 print("✓ [3] 关键词触发正常（不带 @ 也回复）")
             else:
                 print(f"✗ [3] 关键词触发失败: {got!r}")
+                ok = False
+
+            await asyncio.sleep(0.5)
+
+            # 用例 4：英文关键词不能被单词内部误伤（friends 含 ds）
+            await ws.send_str(group_msg(4, [{"type": "text", "data": {"text": "我和friends去吃饭"}}]))
+            got = await wait_reply(ws, 3)
+            if got is None:
+                print("✓ [4] 英文关键词按单词边界匹配（friends 不触发）")
+            else:
+                print(f"✗ [4] friends 不该触发，却回了: {got!r}")
+                ok = False
+
+            # 用例 5：英文关键词独立出现 -> 应该回复
+            await ws.send_str(group_msg(5, [{"type": "text", "data": {"text": "ds 在吗"}}]))
+            got = await wait_reply(ws, 20)
+            if got and "测试回复" in got:
+                print("✓ [5] 英文关键词独立出现正常触发")
+            else:
+                print(f"✗ [5] 英文关键词触发失败: {got!r}")
                 ok = False
 
             await ws.close()
