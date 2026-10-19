@@ -1,0 +1,6 @@
+# 统一换行符，避免 Windows 上出现"批处理莫名语法错误"
+* text=auto eol=lf
+
+# 批处理必须是 CRLF，否则 cmd 报 "The syntax of the command is incorrect."
+*.cmd text eol=crlf
+*.bat text eol=crlf

@@ -1,0 +1,21 @@
+# 真实配置（含 API Key），不提交
+bot/config.json
+bot/config.selftest.json
+
+# 运行产物
+*.log
+bot/console.out
+bot/__pycache__/
+__pycache__/
+*.pyc
+
+# NapCat 本体与下载物（第三方、体积大，自行下载）
+NapCat.Shell/
+download/
+*.zip
+qqnt.json
+
+# 本地环境
+.venv/
+venv/
+.env
